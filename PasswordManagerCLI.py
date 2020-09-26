@@ -125,6 +125,35 @@ def MP_check(input_MP):
 
         return MP_hash_check
 
+def get_password(user_PW_choice):
+    query = "SELECT SERVICE,PASSWD FROM PASSKEYS WHERE ID = ?;"
+    cursor.execute(query, [user_PW_choice])
+
+    results = cursor.fetchall()
+
+    for service,password in results:
+        print("\nThe password for %s is:\n"%(service))
+
+        # Get crypto key for service        
+        decrypt_key = get_key(service)
+
+        # Decrypt encrypted passwd 
+        f2 = Fernet(decrypt_key)
+        decrypted_passw = f2.decrypt(password)
+        decoded_password = decrypted_passw.decode()
+
+        print("#"*20)
+        print(decoded_password)
+        print("#"*20)
+
+        print("\nWhat would you like to do next?")
+        print("1. Copy to clipboard")
+        print("2. Delete")
+        print("3. Back to Main Menu")
+
+
+
+
 ####################### VIEWS ############################
 
 def main_menu():
@@ -146,7 +175,7 @@ def main_menu():
         
     elif input_ == "2":
         # Get password
-        get_services_view()
+        get_passwords_view()
 
     elif input_ == "3":
         # Generate passwd
@@ -176,7 +205,7 @@ def store_password_view():
         print("Password stored successfuly!")
         main_menu()
 
-def get_services_view():
+def get_passwords_view():
     query = "SELECT ID,SERVICE FROM PASSKEYS;"
     cursor.execute(query)
 
@@ -191,8 +220,24 @@ def get_services_view():
     print("#"*20)
 
 
-    print("\nWhich password would you like to see? (0-%s)"%(results_length))
+    print("\nWhich password would you like to see? (1-%s)"%(results_length))
     user_PW_choice = input(":")
+
+    # while user_PW_choice.isnumeric() == False:
+    #     print("Please provide a valid number")
+    #     user_PW_choice = input(":")
+
+    #     if user_PW_choice.isnumeric():
+    #         break
+
+
+
+    # while eval(user_PW_choice) > results_length or eval(user_PW_choice) == 0:
+    #     print("Please provide a value from range 1-%s"%(results_length))
+    #     user_PW_choice = input(":")
+
+    get_password(user_PW_choice)
+
 
 ##########################################################
 
