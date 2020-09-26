@@ -4,6 +4,7 @@ import sqlite3
 import bcrypt
 from cryptography.fernet import Fernet
 import getpass
+import clipboard
 
 
 print("\n"+"#"*39)
@@ -150,8 +151,37 @@ def get_password(user_PW_choice):
         print("1. Copy to clipboard")
         print("2. Delete")
         print("3. Back to Main Menu")
+        option = input(":")
 
+        if option == "1":
+            copy_to_clipboard(decoded_password)
+            main_menu()
+        elif option == "2":
+            delete_password(service, password)
+            main_menu()
+        elif option == "3":
+            main_menu()
 
+def delete_password(service, password):
+    delete_query = "DELETE FROM PASSKEYS WHERE PASSWD = ?;"
+    try:
+        cursor.execute(delete_query, [password])
+        conn.commit()
+
+        # REMOVE KEY FILE IF EXISTS
+        remove_key(service)
+
+        print("Password has been deleted!")
+
+    except:
+        print("Unable to delete password")
+
+def copy_to_clipboard(password):
+    try:
+        clipboard.copy(password)
+        print("Coppied to clipboard!")
+    except:
+        print("Unable to copy password to clipboard")
 
 
 ####################### VIEWS ############################
@@ -188,22 +218,25 @@ def store_password_view():
     # TODO - unique service check
 
     if len(service) > 0:
-        # Generate crypto key for service
-        crypto_key = generate_key(service)
-        
-        # Encode password
-        encoded_passwd = password.encode('utf-8')
+        try:
+            # Generate crypto key for service
+            crypto_key = generate_key(service)
+            
+            # Encode password
+            encoded_passwd = password.encode('utf-8')
 
-        # Encrypt password
-        f = Fernet(crypto_key)
-        encrypted_passwd = f.encrypt(encoded_passwd)
+            # Encrypt password
+            f = Fernet(crypto_key)
+            encrypted_passwd = f.encrypt(encoded_passwd)
 
-        command = "INSERT INTO PASSKEYS(SERVICE,PASSWD) VALUES(?,?);"
-        cursor.execute(command, [service, encrypted_passwd])
-        conn.commit()
+            command = "INSERT INTO PASSKEYS(SERVICE,PASSWD) VALUES(?,?);"
+            cursor.execute(command, [service, encrypted_passwd])
+            conn.commit()
 
-        print("Password stored successfuly!")
-        main_menu()
+            print("Password stored successfuly!")
+            main_menu()
+        except:
+            print("Error while storing password!")
 
 def get_passwords_view():
     query = "SELECT ID,SERVICE FROM PASSKEYS;"
