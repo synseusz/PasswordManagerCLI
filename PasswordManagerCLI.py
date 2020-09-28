@@ -4,7 +4,8 @@ import sqlite3
 import bcrypt
 from cryptography.fernet import Fernet
 import getpass
-import clipboard
+import string
+from random import randint,choice
 
 
 print("\n"+"#"*39)
@@ -148,18 +149,14 @@ def get_password(user_PW_choice):
         print("#"*20)
 
         print("\nWhat would you like to do next?")
-        print("1. Copy to clipboard")
-        print("2. Delete")
-        print("3. Back to Main Menu")
+        print("1. Delete")
+        print("2. Back to Main Menu")
         option = input(":")
 
         if option == "1":
-            copy_to_clipboard(decoded_password)
-            main_menu()
-        elif option == "2":
             delete_password(service, password)
             main_menu()
-        elif option == "3":
+        elif option == "2":
             main_menu()
 
 def delete_password(service, password):
@@ -176,12 +173,14 @@ def delete_password(service, password):
     except:
         print("Unable to delete password")
 
-def copy_to_clipboard(password):
-    try:
-        clipboard.copy(password)
-        print("Coppied to clipboard!")
-    except:
-        print("Unable to copy password to clipboard")
+def generate_passwd():
+    # Generating passwd
+    special_chars = ("!" + "?" + "@" + "&") * 2
+    char_list = string.ascii_letters + string.digits + str(special_chars)
+
+    x = ""
+    generated_passwd = x.join(choice(char_list) for x in range(randint(10, 16)))
+    return generated_passwd
 
 
 ####################### VIEWS ############################
@@ -201,7 +200,7 @@ def main_menu():
 
     elif input_ == "1":
         # Store passwd
-        store_password_view()
+        store_password_view(password="none")
         
     elif input_ == "2":
         # Get password
@@ -209,11 +208,17 @@ def main_menu():
 
     elif input_ == "3":
         # Generate passwd
-        pass
+        generate_password_view()
 
-def store_password_view():
+def store_password_view(password):
     service = input("\nName of the service: ")
-    password = input("Password: ")
+
+    if password == "none":
+        password = input("Password: ")
+    else:
+        password = password
+        if len(service) > 0:
+            print("Generated password has been assigned to given service")
 
     # TODO - unique service check
 
@@ -237,6 +242,15 @@ def store_password_view():
             main_menu()
         except:
             print("Error while storing password!")
+        
+    else:
+        print("Please provide a name of the service first!")
+
+        if password == "none":
+            store_password_view(password="none")
+        else:
+            store_password_view(password=password)
+       
 
 def get_passwords_view():
     query = "SELECT ID,SERVICE FROM PASSKEYS;"
@@ -256,21 +270,32 @@ def get_passwords_view():
     print("\nWhich password would you like to see? (1-%s)"%(results_length))
     user_PW_choice = input(":")
 
-    # while user_PW_choice.isnumeric() == False:
-    #     print("Please provide a valid number")
-    #     user_PW_choice = input(":")
-
-    #     if user_PW_choice.isnumeric():
-    #         break
-
-
-
-    # while eval(user_PW_choice) > results_length or eval(user_PW_choice) == 0:
-    #     print("Please provide a value from range 1-%s"%(results_length))
-    #     user_PW_choice = input(":")
 
     get_password(user_PW_choice)
 
+def generate_password_view():
+    print("\nYour generated password is:")
+
+    generated_password = generate_passwd()
+
+    print("\n" + "#"*20)
+    print(generated_password)
+    print("#"*20)
+    print("length -", len(generated_password))
+
+
+    print("\nWhat would you like to do next?")
+    print("1. Reroll")
+    print("2. Add to storage")
+    print("3. Back to Main Menu")
+    option = input(":")
+
+    if option == "1":
+        generate_password_view()
+    elif option == "2":
+        store_password_view(password=generated_password)
+    elif option == "3":
+        main_menu()
 
 ##########################################################
 
