@@ -182,6 +182,34 @@ def generate_passwd():
     generated_passwd = x.join(choice(char_list) for x in range(randint(10, 16)))
     return generated_passwd
 
+def unique_service_check(service):
+    s = service
+    is_unique = ""
+
+    sql_cmd = "SELECT SERVICE FROM PASSKEYS;"
+    cursor.execute(sql_cmd)
+
+    results = cursor.fetchall()
+    number_of_passwords_stored = len(results)
+
+    if number_of_passwords_stored == 0:
+        is_unique = True
+        return is_unique
+
+    else:
+        for services in results:
+            x = services[0]
+            
+            if x == s:
+                is_unique = False
+                break
+            elif x != s:
+                is_unique = True
+            else:
+                print("is_unique value - ", str(is_unique))
+
+    return is_unique
+
 
 ####################### VIEWS ############################
 
@@ -213,16 +241,15 @@ def main_menu():
 def store_password_view(password):
     service = input("\nName of the service: ")
 
-    if password == "none":
-        password = input("Password: ")
-    else:
-        password = password
-        if len(service) > 0:
-            print("Generated password has been assigned to given service")
+    is_service_unique = unique_service_check(service)
 
-    # TODO - unique service check
-
-    if len(service) > 0:
+    if len(service) > 0 and is_service_unique == True:
+        if password == "none":
+            password = input("Password: ")
+        else:
+            password = password
+            if len(service) > 0:
+                print("Generated password has been assigned to given service")
         try:
             # Generate crypto key for service
             crypto_key = generate_key(service)
@@ -242,6 +269,14 @@ def store_password_view(password):
             main_menu()
         except:
             print("Error while storing password!")
+
+    elif is_service_unique == False:
+        print("Password for given service already exists!")
+
+        if password == "none":
+            store_password_view(password="none")
+        else:
+            store_password_view(password=password)
         
     else:
         print("Please provide a name of the service first!")
